@@ -1,0 +1,7 @@
+# Temporary/generated files
+b64.txt
+test_out.txt
+_writer.php
+
+# Claude Code local state
+.claude/
