@@ -4,7 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChessPairings — Predict Next Round</title>
+    <meta name="description" content="Predict Swiss-system pairings for chess tournaments on chess-results.com. Powered by JaVaFo, the FIDE-endorsed Dutch pairing engine.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://chess-pairings.com/">
+    <meta property="og:title" content="ChessPairings — Predict Next Round">
+    <meta property="og:description" content="Predict Swiss-system pairings for chess tournaments on chess-results.com. Powered by JaVaFo, the FIDE-endorsed Dutch pairing engine.">
+    <meta property="og:image" content="https://chess-pairings.com/og-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ChessPairings — Predict Next Round">
+    <meta name="twitter:description" content="Predict Swiss-system pairings for chess tournaments on chess-results.com.">
+    <meta name="twitter:image" content="https://chess-pairings.com/og-image.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
