@@ -276,20 +276,26 @@ class ChessResultsScraper
             }
         }
 
-        // Derive completed rounds from data if not set by standings page
-        // Note: empty(0) is true in PHP, so use !isset() to respect completedRounds=0 from "after Round 0"
-        if (!isset($this->tournamentInfo['completedRounds'])) {
-            $completed = 0;
-            $roundNums = array_keys($this->rounds);
-            sort($roundNums);
-            foreach ($roundNums as $roundNum) {
-                $allDone = true;
-                foreach ($this->rounds[$roundNum]['pairings'] as $p) {
-                    if ($p['result'] === null && !$p['isBye']) { $allDone = false; break; }
-                }
-                if ($allDone) $completed = $roundNum;
+        // Derive completed rounds from pairings data (may be more current than standings page text)
+        $completedFromData = 0;
+        $roundNums = array_keys($this->rounds);
+        sort($roundNums);
+        foreach ($roundNums as $roundNum) {
+            $allDone = true;
+            foreach ($this->rounds[$roundNum]['pairings'] as $p) {
+                if ($p['result'] === null && !$p['isBye']) { $allDone = false; break; }
             }
-            $this->tournamentInfo['completedRounds'] = $completed;
+            if ($allDone) $completedFromData = $roundNum;
+        }
+
+        if (!isset($this->tournamentInfo['completedRounds'])) {
+            $this->tournamentInfo['completedRounds'] = $completedFromData;
+        } else {
+            // Standings page text can lag behind actual results; take the higher value
+            $this->tournamentInfo['completedRounds'] = max(
+                $this->tournamentInfo['completedRounds'],
+                $completedFromData
+            );
         }
 
         if (empty($this->tournamentInfo['totalRounds'])) {
