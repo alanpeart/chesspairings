@@ -74,7 +74,7 @@ class JaVaFoPairing
     private function generateTrf(): string
     {
         $name = $this->tournamentInfo['name'] ?? 'Tournament';
-        $totalRounds = $this->tournamentInfo['totalRounds'] ?? $this->nextRound;
+        $totalRounds = max($this->tournamentInfo['totalRounds'] ?? 0, $this->nextRound);
         $completedRounds = $this->nextRound - 1;
 
         $trf = "012 $name\n";
