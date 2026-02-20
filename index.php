@@ -15,7 +15,7 @@
             <div class="logo">
                 <span class="logo-icon">♔</span>
                 <div>
-                    <h1>ChessPairings</h1>
+                    <h1>ChessPairings <span class="alpha-badge">alpha</span></h1>
                     <p class="tagline">Predict the next round from chess-results.com</p>
                 </div>
             </div>
@@ -23,6 +23,10 @@
     </header>
 
     <main class="main">
+        <section class="intro">
+            <p>An unofficial tool that predicts Swiss-system pairings for tournaments on chess-results.com. Powered by <a href="https://github.com/JaVaFo" target="_blank" rel="noopener">JaVaFo</a>, the FIDE-endorsed Dutch pairing engine. Paste a tournament link below to see predicted pairings for any round &mdash; useful for scouting your likely next opponent or just satisfying your curiosity!</p>
+        </section>
+
         <section class="input-section">
             <div class="input-card">
                 <label for="tournament-url">Tournament URL</label>
@@ -52,11 +56,13 @@
                 <button class="tab active" data-tab="pairings">Predicted Pairings</button>
                 <button class="tab" data-tab="standings">Current Standings</button>
                 <button class="tab" data-tab="history">Player History</button>
+                <button class="tab hidden" data-tab="final-standings">Final Standings</button>
             </div>
 
             <div class="tab-content" id="tab-pairings"></div>
             <div class="tab-content hidden" id="tab-standings"></div>
             <div class="tab-content hidden" id="tab-history"></div>
+            <div class="tab-content hidden" id="tab-final-standings"></div>
         </section>
     </main>
 

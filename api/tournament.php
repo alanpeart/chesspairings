@@ -151,6 +151,20 @@ try {
         ];
     }
 
+    // Build final standings for completed tournaments
+    $finalStandings = null;
+    if ($isCompleted && $targetRound > 0) {
+        $finalStandings = array_values($fullData['players']);
+        usort($finalStandings, function ($a, $b) {
+            if ($b['currentScore'] !== $a['currentScore']) return $b['currentScore'] <=> $a['currentScore'];
+            return $b['rating'] <=> $a['rating'];
+        });
+        foreach ($finalStandings as $i => &$fs) {
+            $fs['rank'] = $i + 1;
+        }
+        unset($fs);
+    }
+
     $response = [
         'success' => true,
         'mode' => 'predictions',
@@ -165,6 +179,10 @@ try {
         ],
         'playerDetails' => $playerDetails,
     ];
+
+    if ($finalStandings !== null) {
+        $response['finalStandings'] = $finalStandings;
+    }
 
     if (isset($actualPool)) {
         $response['actualPoolSize'] = count($actualPool);

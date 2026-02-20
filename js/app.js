@@ -230,6 +230,16 @@
         renderStandings(data.standings);
         renderHistory(data.playerDetails, predictingRound - 1);
 
+        // Final standings tab — show only for completed tournaments
+        const finalTab = $('.tab[data-tab="final-standings"]');
+        if (isCompleted && data.finalStandings) {
+            finalTab.classList.remove('hidden');
+            renderFinalStandings(data.finalStandings);
+        } else {
+            finalTab.classList.add('hidden');
+            $('#tab-final-standings').innerHTML = '';
+        }
+
         // Reset to pairings tab
         $$('.tab').forEach((t) => t.classList.remove('active'));
         $('.tab[data-tab="pairings"]').classList.add('active');
@@ -315,6 +325,36 @@
 
         html += '</tbody></table>';
         $('#tab-standings').innerHTML = html;
+    }
+
+    function renderFinalStandings(finalStandings) {
+        let html = `<table class="data-table">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:40px">Rk</th>
+                    <th style="width:40px" class="text-center">No</th>
+                    <th>Name</th>
+                    <th class="text-center">Rtg</th>
+                    <th class="text-center">Fed</th>
+                    <th class="text-center">Pts</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        for (const p of finalStandings) {
+            html += `
+                <tr>
+                    <td class="num text-center">${p.rank || '-'}</td>
+                    <td class="num text-center">${p.startNo}</td>
+                    <td>${esc(p.name)}</td>
+                    <td class="num text-center">${p.rating || '-'}</td>
+                    <td class="text-center">${esc(p.federation || '')}</td>
+                    <td class="num text-center">${p.currentScore}</td>
+                </tr>`;
+        }
+
+        html += '</tbody></table>';
+        $('#tab-final-standings').innerHTML = html;
     }
 
     function renderHistory(playerDetails, completedRounds) {

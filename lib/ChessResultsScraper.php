@@ -41,6 +41,8 @@ class ChessResultsScraper
         $pairingsHtml = $this->fetchPage('&art=2');
         $this->parsePairings($pairingsHtml);
 
+        $this->fetchMissingRounds();
+
         $this->buildPlayerData();
 
         return [
@@ -48,6 +50,31 @@ class ChessResultsScraper
             'players' => $this->players,
             'rounds' => $this->rounds,
         ];
+    }
+
+    /**
+     * Fetch any completed rounds that are missing or truncated from the default pairings page.
+     * chess-results.com only shows the last few rounds on &art=2; earlier rounds need &art=2&rd=N.
+     */
+    private function fetchMissingRounds(): void
+    {
+        $completedRounds = $this->tournamentInfo['completedRounds'] ?? 0;
+        if ($completedRounds <= 0) return;
+
+        // Expect roughly half the player count as pairings per round;
+        // use 40% to allow for withdrawals and byes
+        $threshold = max(1, count($this->players) * 0.4);
+
+        for ($r = 1; $r <= $completedRounds; $r++) {
+            if (isset($this->rounds[$r]) && count($this->rounds[$r]['pairings']) >= $threshold) {
+                continue;
+            }
+
+            // Clear any partial data before re-fetching
+            unset($this->rounds[$r]);
+            $html = $this->fetchPage("&art=2&rd=$r");
+            $this->parsePairings($html);
+        }
     }
 
     private function fetchPage(string $params): string

@@ -108,7 +108,7 @@ class JaVaFoPairing
                         $roundData[] = [
                             'opponent' => 0,
                             'color' => '-',
-                            'result' => $this->mapResult($result, true),
+                            'result' => $this->mapByeResult($result),
                         ];
                     } else {
                         $isForfeit = ($color === '-');
@@ -157,9 +157,16 @@ class JaVaFoPairing
         return $trf;
     }
 
-    private function mapResult(string $result, bool $isBye): string
+    private function mapByeResult(string $result): string
     {
-        if ($isBye) {
+        if ($result === '1') return 'F'; // TRF16: full-point bye
+        if ($result === '½') return 'H'; // half-point bye
+        return '-';                       // zero-point bye / absent
+    }
+
+    private function mapResult(string $result, bool $isForfeit): string
+    {
+        if ($isForfeit) {
             if ($result === '1') return '+';
             if ($result === '½') return 'H';
             return '-';

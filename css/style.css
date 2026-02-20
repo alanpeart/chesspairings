@@ -12,8 +12,8 @@
     --bg-hover: #252839;
     --border: #2a2d3e;
     --text-primary: #e8e9ed;
-    --text-secondary: #9ca0b0;
-    --text-muted: #6b7084;
+    --text-secondary: #b4b8c8;
+    --text-muted: #8e93a8;
     --accent: #4d8ef7;
     --accent-hover: #3a7ae8;
     --gold: #f0c040;
@@ -44,6 +44,17 @@ body {
         linear-gradient(-45deg, transparent 75%, #12141e 75%);
     background-size: 60px 60px;
     background-position: 0 0, 0 30px, 30px -30px, 30px 0px;
+}
+
+a {
+    color: var(--gold);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+a:hover {
+    color: var(--gold-dark);
+    text-decoration: underline;
 }
 
 /* === Header === */
@@ -79,10 +90,34 @@ body {
     letter-spacing: -0.02em;
 }
 
+.alpha-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--gold-dark);
+    color: #1a1a2e;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    vertical-align: middle;
+    position: relative;
+    top: -0.15em;
+}
+
 .tagline {
     font-size: 0.8rem;
     color: var(--text-muted);
     margin-top: -0.1rem;
+}
+
+.intro {
+    margin-bottom: 1rem;
+}
+
+.intro p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
 }
 
 /* === Main === */
@@ -517,8 +552,6 @@ body {
 
 .footer a {
     color: var(--text-secondary);
-    text-decoration: underline;
-    text-decoration-color: var(--border);
 }
 
 .footer a:hover {
