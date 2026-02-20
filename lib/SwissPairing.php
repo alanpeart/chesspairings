@@ -42,6 +42,12 @@ class SwissPairing
             $byeRounds = [];
             $score = 0;
 
+            // Find last round this player has data for (to infer byes for missing earlier rounds)
+            $lastDataRound = 0;
+            foreach ($player['opponents'] as $r => $opp) {
+                if ($r <= $cutoff && $r > $lastDataRound) $lastDataRound = $r;
+            }
+
             for ($r = 1; $r <= $cutoff; $r++) {
                 if (isset($player['opponents'][$r])) {
                     $newOpponents[$r] = $player['opponents'][$r];
@@ -54,6 +60,9 @@ class SwissPairing
                     $res = $player['results'][$r];
                     if ($res === '1') $score += 1;
                     elseif ($res === '½') $score += 0.5;
+                } elseif ($r < $lastDataRound) {
+                    // No data but played later: infer half-point bye
+                    $score += 0.5;
                 }
             }
 
@@ -145,6 +154,13 @@ class SwissPairing
             }
 
             if (empty($group)) continue;
+
+            // Viability pre-check: if this small group can't produce any valid
+            // pairing (all players already played each other), collapse into next group
+            if (count($group) <= 6 && !$this->canGroupProducePairing($group)) {
+                $downfloaters = array_merge($downfloaters, $group);
+                continue;
+            }
 
             // Sort within group: startNo ASC (= TPN order)
             usort($group, fn($a, $b) => $a['startNo'] <=> $b['startNo']);
@@ -483,6 +499,22 @@ class SwissPairing
             }
             // Re-sort remaining natives
             usort($remainingNatives, fn($a, $b) => $a['startNo'] <=> $b['startNo']);
+        }
+
+        // Viability check: if remaining natives can't pair internally and the
+        // native group is small, undo the heterogeneous pairing and collapse
+        // all players into the next score group (matching JaVaFo behavior).
+        if (count($natives) <= 4
+            && !empty($bestResult['pairings'])
+            && count($remainingNatives) >= 1
+            && !$this->canGroupProducePairing($remainingNatives)
+        ) {
+            // Undo: return no pairings, all natives as remaining, all downfloaters as unpaired
+            return [
+                'pairings' => [],
+                'remainingNatives' => $natives,
+                'unpaired' => $downfloaters,
+            ];
         }
 
         return [
@@ -907,6 +939,27 @@ class SwissPairing
 
         // The weaker preference concedes — cost is the weaker's weight
         return min($w1, $w2);
+    }
+
+    /**
+     * Check if a small group of players can produce at least one valid pairing.
+     * Returns true if any two players in the group can play each other.
+     * Only called for small groups (≤ 6) to avoid O(n²) cost on large groups.
+     */
+    private function canGroupProducePairing(array $group): bool
+    {
+        $n = count($group);
+        if ($n < 2) return false;
+        if ($n > 6) return true; // assume large groups can pair
+
+        for ($i = 0; $i < $n - 1; $i++) {
+            for ($j = $i + 1; $j < $n; $j++) {
+                if ($this->canPlay($group[$i], $group[$j])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

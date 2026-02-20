@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/lib/ChessResultsScraper.php';
 require_once __DIR__ . '/lib/SwissPairing.php';
+require_once __DIR__ . '/lib/JaVaFoPairing.php';
 
 $url = $argv[1] ?? 'https://chess-results.com/tnr1284261.aspx?lan=1';
 
@@ -30,8 +31,7 @@ for ($targetRound = 1; $targetRound <= $totalRounds; $targetRound++) {
     }
     $actualPool = array_unique($actualPool);
 
-    $data = SwissPairing::rewindToRound($fullData, $targetRound);
-    $pairer = new SwissPairing($data, $actualPool);
+    $pairer = new JaVaFoPairing($fullData, $actualPool, $targetRound);
     $predictions = $pairer->predict();
 
     $predicted = [];

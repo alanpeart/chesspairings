@@ -506,8 +506,8 @@ class ChessResultsScraper
         if ($val === '1-0') return '1-0';
         if ($val === '0-1') return '0-1';
         if ($val === '½-½' || $val === '1/2-1/2') return '½-½';
-        if ($val === '+-−' || $val === '+--') return '1-0';
-        if ($val === '−-+' || $val === '--+') return '0-1';
+        if ($val === '+-−' || $val === '+--') return 'F1-0';
+        if ($val === '−-+' || $val === '--+') return 'F0-1';
 
         return null;
     }
@@ -531,15 +531,17 @@ class ChessResultsScraper
                     continue;
                 }
 
+                $forfeit = $this->isForfeit($pairing['result']);
+
                 if (isset($this->players[$whiteNo])) {
                     $this->players[$whiteNo]['opponents'][$roundNum] = $blackNo;
-                    $this->players[$whiteNo]['colors'][$roundNum] = 'W';
+                    $this->players[$whiteNo]['colors'][$roundNum] = $forfeit ? '-' : 'W';
                     $this->players[$whiteNo]['results'][$roundNum] = $this->resultForWhite($pairing['result']);
                 }
 
                 if (isset($this->players[$blackNo])) {
                     $this->players[$blackNo]['opponents'][$roundNum] = $whiteNo;
-                    $this->players[$blackNo]['colors'][$roundNum] = 'B';
+                    $this->players[$blackNo]['colors'][$roundNum] = $forfeit ? '-' : 'B';
                     $this->players[$blackNo]['results'][$roundNum] = $this->resultForBlack($pairing['result']);
                 }
             }
@@ -549,15 +551,20 @@ class ChessResultsScraper
     private function resultForWhite(?string $result): ?string
     {
         return match ($result) {
-            '1-0' => '1', '0-1' => '0', '½-½' => '½', default => null,
+            '1-0', 'F1-0' => '1', '0-1', 'F0-1' => '0', '½-½' => '½', default => null,
         };
     }
 
     private function resultForBlack(?string $result): ?string
     {
         return match ($result) {
-            '1-0' => '0', '0-1' => '1', '½-½' => '½', default => null,
+            '1-0', 'F1-0' => '0', '0-1', 'F0-1' => '1', '½-½' => '½', default => null,
         };
+    }
+
+    private function isForfeit(?string $result): bool
+    {
+        return $result === 'F1-0' || $result === 'F0-1';
     }
 
     private function parseScore(string $val): float

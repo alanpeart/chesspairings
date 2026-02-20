@@ -5,6 +5,7 @@ header('Access-Control-Allow-Origin: *');
 
 require_once __DIR__ . '/../lib/ChessResultsScraper.php';
 require_once __DIR__ . '/../lib/SwissPairing.php';
+require_once __DIR__ . '/../lib/JaVaFoPairing.php';
 
 try {
     $action = $_GET['action'] ?? '';
@@ -43,6 +44,7 @@ try {
                     && empty($data['rounds']);
 
     // If target round specified, rewind player state to before that round
+    $fullData = $data; // Keep full data for JaVaFo (needs future-round info for bye inference)
     if ($targetRound > 0) {
         if ($targetRound < 1 || $targetRound > $tournament['totalRounds']) {
             http_response_code(400);
@@ -63,7 +65,11 @@ try {
             $actualPool = array_unique($actualPool);
         }
 
-        $data = SwissPairing::rewindToRound($data, $targetRound);
+        // Rewind for display purposes (standings, player history, scores)
+        $data = SwissPairing::rewindToRound($fullData, $targetRound);
+
+        // Generate predicted pairings using JaVaFo with full data
+        $pairer = new JaVaFoPairing($fullData, $actualPool, $targetRound);
     } elseif ($isCompleted) {
         // Completed tournament, no round specified — return info mode
         echo json_encode([
@@ -73,10 +79,11 @@ try {
             'playerCount' => count($data['players']),
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
+    } else {
+        // Live tournament — predict next round
+        $pairer = new JaVaFoPairing($data);
     }
 
-    // Generate predicted pairings
-    $pairer = new SwissPairing($data, $actualPool ?? null);
     $predictions = $pairer->predict();
 
     // Determine which rounds to show in history/standings
@@ -122,21 +129,24 @@ try {
     }
 
     // Format pairings for response
+    // Use rewound player data ($data) for scores so they reflect state before the target round
     $formattedPairings = [];
     foreach ($predictions['pairings'] as $pairing) {
+        $whiteNo = $pairing['white']['startNo'];
+        $blackNo = $pairing['black']['startNo'];
         $formattedPairings[] = [
             'board' => $pairing['board'],
             'white' => [
-                'startNo' => $pairing['white']['startNo'],
+                'startNo' => $whiteNo,
                 'name' => $pairing['white']['name'],
                 'rating' => $pairing['white']['rating'],
-                'score' => $pairing['white']['currentScore'],
+                'score' => $data['players'][$whiteNo]['currentScore'] ?? $pairing['white']['currentScore'],
             ],
             'black' => [
-                'startNo' => $pairing['black']['startNo'],
+                'startNo' => $blackNo,
                 'name' => $pairing['black']['name'],
                 'rating' => $pairing['black']['rating'],
-                'score' => $pairing['black']['currentScore'],
+                'score' => $data['players'][$blackNo]['currentScore'] ?? $pairing['black']['currentScore'],
             ],
         ];
     }
