@@ -67,6 +67,8 @@
         <section id="results" class="results hidden">
             <div class="tournament-header" id="tournament-header"></div>
 
+            <div id="bye-selector" class="bye-selector hidden"></div>
+
             <div class="tabs">
                 <button class="tab active" data-tab="pairings">Predicted Pairings</button>
                 <button class="tab" data-tab="standings">Current Standings</button>

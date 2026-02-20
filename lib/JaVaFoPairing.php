@@ -8,19 +8,22 @@ class JaVaFoPairing
     private int $nextRound;
     private ?array $actualPool;
     private ?int $byePlayer = null;
+    private array $manualByes;
 
     /**
      * @param array $data Tournament data (can be full or rewound)
      * @param array|null $actualPool StartNos of players eligible for pairing
      * @param int|null $targetRound If set, pair this round (uses full data up to targetRound-1)
+     * @param array $manualByes StartNos of players taking a half-point bye
      */
-    public function __construct(array $data, ?array $actualPool = null, ?int $targetRound = null)
+    public function __construct(array $data, ?array $actualPool = null, ?int $targetRound = null, array $manualByes = [])
     {
         $this->players = $data['players'];
         $this->rounds = $data['rounds'];
         $this->tournamentInfo = $data['tournament'];
         $this->nextRound = $targetRound ?? (($this->tournamentInfo['completedRounds'] ?? 0) + 1);
         $this->actualPool = $actualPool;
+        $this->manualByes = $manualByes;
     }
 
     public static function rewindToRound(array $data, int $targetRound): array
@@ -57,6 +60,17 @@ class JaVaFoPairing
 
             $pairings = $this->parseOutput($output);
 
+            $manualByeInfo = [];
+            foreach ($this->manualByes as $sno) {
+                if (isset($this->players[$sno])) {
+                    $manualByeInfo[] = [
+                        'playerNo' => $sno,
+                        'playerName' => $this->players[$sno]['name'] ?? 'Unknown',
+                        'playerRating' => $this->players[$sno]['rating'] ?? 0,
+                    ];
+                }
+            }
+
             return [
                 'nextRound' => $this->nextRound,
                 'pairings' => $pairings,
@@ -65,6 +79,7 @@ class JaVaFoPairing
                     'playerName' => $this->players[$this->byePlayer]['name'] ?? 'Unknown',
                     'playerRating' => $this->players[$this->byePlayer]['rating'] ?? 0,
                 ] : null,
+                'manualByes' => $manualByeInfo,
             ];
         } finally {
             @unlink($trfFile);
@@ -128,9 +143,11 @@ class JaVaFoPairing
                 }
             }
 
-            // Mark absent for current round if not in pool
+            // Mark absent for current round if not in pool, or half-point bye if manually specified
             if ($this->actualPool !== null && !in_array($startNo, $this->actualPool)) {
                 $roundData[] = ['opponent' => 0, 'color' => '-', 'result' => '-'];
+            } elseif (in_array($startNo, $this->manualByes)) {
+                $roundData[] = ['opponent' => 0, 'color' => '-', 'result' => 'H'];
             }
 
             // Compute score from rounds 1..completedRounds only (not from full tournament score)

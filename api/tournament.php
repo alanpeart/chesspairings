@@ -33,9 +33,20 @@ try {
     // Optional: predict a specific round (for completed tournaments)
     $targetRound = isset($_GET['round']) ? (int)$_GET['round'] : 0;
 
+    // Optional: manual half-point byes (comma-separated startNos)
+    $manualByes = [];
+    if (!empty($_GET['byes'])) {
+        $manualByes = array_map('intval', explode(',', $_GET['byes']));
+        $manualByes = array_filter($manualByes, fn($v) => $v > 0);
+        $manualByes = array_values(array_unique($manualByes));
+    }
+
     // Scrape tournament data
     $scraper = new ChessResultsScraper($url);
     $data = $scraper->analyze();
+
+    // Validate manual byes against actual player startNos
+    $manualByes = array_values(array_filter($manualByes, fn($sno) => isset($data['players'][$sno])));
 
     $tournament = $data['tournament'];
     $isCompleted = $tournament['completedRounds'] >= $tournament['totalRounds']
@@ -69,7 +80,7 @@ try {
         $data = SwissPairing::rewindToRound($fullData, $targetRound);
 
         // Generate predicted pairings using JaVaFo with full data
-        $pairer = new JaVaFoPairing($fullData, $actualPool, $targetRound);
+        $pairer = new JaVaFoPairing($fullData, $actualPool, $targetRound, $manualByes);
     } elseif ($isCompleted) {
         // Completed tournament, no round specified — return info mode
         echo json_encode([
@@ -81,7 +92,7 @@ try {
         exit;
     } else {
         // Live tournament — predict next round
-        $pairer = new JaVaFoPairing($data);
+        $pairer = new JaVaFoPairing($data, null, null, $manualByes);
     }
 
     $predictions = $pairer->predict();
@@ -176,6 +187,7 @@ try {
             'nextRound' => $predictions['nextRound'],
             'pairings' => $formattedPairings,
             'bye' => $predictions['bye'],
+            'manualByes' => $predictions['manualByes'] ?? [],
         ],
         'playerDetails' => $playerDetails,
     ];

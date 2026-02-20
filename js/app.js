@@ -12,14 +12,20 @@
     const resultsSection = $('#results');
     const roundPicker = $('#round-picker');
 
-    // State: cache scraped data URL so round switches don't re-prompt
+    // State
     let currentTournamentUrl = '';
+    let currentStandings = [];
+    let manualByes = [];
+    let byeDropdownListenerAttached = false;
 
     // Check URL params on load
     const params = new URLSearchParams(window.location.search);
     if (params.get('url')) {
         urlInput.value = params.get('url');
         const autoRound = params.get('round') ? parseInt(params.get('round'), 10) : 0;
+        if (params.get('byes')) {
+            manualByes = params.get('byes').split(',').map(Number).filter(v => v > 0);
+        }
         setTimeout(() => analyze(autoRound), 300);
     }
 
@@ -83,6 +89,7 @@
         // Update URL bar for shareability
         let shareUrl = `${window.location.pathname}?url=${encodeURIComponent(url)}`;
         if (targetRound) shareUrl += `&round=${targetRound}`;
+        if (manualByes.length) shareUrl += `&byes=${manualByes.join(',')}`;
         window.history.replaceState(null, '', shareUrl);
 
         // Progress messages
@@ -103,6 +110,7 @@
         try {
             let apiUrl = `api/tournament.php?action=analyze&url=${encodeURIComponent(url)}`;
             if (targetRound) apiUrl += `&round=${targetRound}`;
+            if (manualByes.length) apiUrl += `&byes=${manualByes.join(',')}`;
 
             const resp = await fetch(apiUrl);
             const data = await resp.json();
@@ -222,10 +230,13 @@
         const roundSelect = $('#header-round-select');
         if (roundSelect) {
             roundSelect.addEventListener('change', () => {
+                manualByes = [];
                 analyze(parseInt(roundSelect.value, 10));
             });
         }
 
+        currentStandings = data.standings;
+        renderByeSelector(data);
         renderPairings(data.predictions);
         renderStandings(data.standings);
         renderHistory(data.playerDetails, predictingRound - 1);
@@ -294,7 +305,121 @@
             html += `<div class="bye-card">Bye: ${esc(b.playerName)} (${b.playerRating})</div>`;
         }
 
+        if (predictions.manualByes && predictions.manualByes.length) {
+            const names = predictions.manualByes.map(b => `${esc(b.playerName)} (${b.playerRating})`).join(', ');
+            html += `<div class="manual-bye-card">Half-point bye: ${names}</div>`;
+        }
+
         $('#tab-pairings').innerHTML = html;
+    }
+
+    function renderByeSelector(data) {
+        const container = $('#bye-selector');
+        const isLive = !data.isCompleted && !data.isNotStarted;
+
+        if (!isLive) {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+            return;
+        }
+
+        container.classList.remove('hidden');
+
+        let chipsHtml = '';
+        for (const sno of manualByes) {
+            const p = currentStandings.find(s => s.startNo === sno);
+            if (p) {
+                chipsHtml += `<span class="bye-chip" data-sno="${sno}">${esc(p.name)} <button type="button" aria-label="Remove">&times;</button></span>`;
+            }
+        }
+
+        container.innerHTML = `
+            <div class="bye-selector-card">
+                <div class="bye-label">Half-Point Byes</div>
+                <div class="bye-hint">Select players taking a half-point bye this round (they'll be excluded from pairings)</div>
+                <div class="bye-input-wrap">
+                    <input type="text" id="bye-search" placeholder="Search player by name or number..." autocomplete="off" spellcheck="false">
+                    <div class="bye-dropdown hidden" id="bye-dropdown"></div>
+                </div>
+                ${chipsHtml ? `<div class="bye-chips">${chipsHtml}</div>` : ''}
+            </div>
+        `;
+
+        const searchInput = $('#bye-search');
+        const dropdown = $('#bye-dropdown');
+
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.trim().toLowerCase();
+            if (q.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const matches = currentStandings
+                .filter(p => !manualByes.includes(p.startNo))
+                .filter(p => p.name.toLowerCase().includes(q) || String(p.startNo) === q)
+                .slice(0, 8);
+
+            if (matches.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = matches.map(p =>
+                `<div class="bye-option" data-sno="${p.startNo}">
+                    <span class="bye-opt-name">${esc(p.name)}</span>
+                    <span class="bye-opt-meta">#${p.startNo} &middot; ${p.rating} &middot; ${p.currentScore}pts</span>
+                </div>`
+            ).join('');
+            dropdown.classList.remove('hidden');
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                dropdown.classList.add('hidden');
+                searchInput.blur();
+            }
+        });
+
+        dropdown.addEventListener('click', (e) => {
+            const opt = e.target.closest('.bye-option');
+            if (!opt) return;
+            const sno = parseInt(opt.dataset.sno, 10);
+            addManualBye(sno);
+        });
+
+        // Chip remove buttons
+        const chips = container.querySelectorAll('.bye-chip button');
+        chips.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sno = parseInt(btn.parentElement.dataset.sno, 10);
+                removeManualBye(sno);
+            });
+        });
+
+        // Close dropdown on outside click (attach once)
+        if (!byeDropdownListenerAttached) {
+            byeDropdownListenerAttached = true;
+            document.addEventListener('click', (e) => {
+                const dd = $('#bye-dropdown');
+                const inp = $('#bye-search');
+                if (dd && !dd.contains(e.target) && inp && !inp.contains(e.target)) {
+                    dd.classList.add('hidden');
+                }
+            });
+        }
+    }
+
+    function addManualBye(startNo) {
+        if (!manualByes.includes(startNo)) {
+            manualByes.push(startNo);
+            analyze();
+        }
+    }
+
+    function removeManualBye(startNo) {
+        manualByes = manualByes.filter(s => s !== startNo);
+        analyze();
     }
 
     function renderStandings(standings) {
