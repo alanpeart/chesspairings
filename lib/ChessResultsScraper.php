@@ -147,6 +147,13 @@ class ChessResultsScraper
         if (preg_match('#(\d+)\s+(?:Rounds|Runden|Rondas|Turni|Tours)#i', $html, $m)) {
             $this->tournamentInfo['totalRounds'] = (int)$m[1];
         }
+        // Pattern: navigation links "Rd.7/9" — denominator is total rounds
+        if (preg_match('#Rd\.\d+/(\d+)#', $html, $m)) {
+            $navTotal = (int)$m[1];
+            if (!isset($this->tournamentInfo['totalRounds']) || $navTotal > $this->tournamentInfo['totalRounds']) {
+                $this->tournamentInfo['totalRounds'] = $navTotal;
+            }
+        }
 
         $dom = new DOMDocument();
         @$dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NOERROR | LIBXML_NOWARNING);
