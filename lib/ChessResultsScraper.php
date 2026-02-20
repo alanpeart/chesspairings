@@ -44,6 +44,7 @@ class ChessResultsScraper
         $this->fetchMissingRounds();
 
         $this->buildPlayerData();
+        $this->computeScoresFromResults();
 
         return [
             'tournament' => $this->tournamentInfo,
@@ -276,9 +277,17 @@ class ChessResultsScraper
             }
         }
 
-        // Remove empty rounds (e.g. rounds that only had "not paired" entries)
+        // Remove rounds with no real games (only byes or empty)
         foreach ($this->rounds as $roundNum => $roundData) {
             if (empty($roundData['pairings'])) {
+                unset($this->rounds[$roundNum]);
+                continue;
+            }
+            $hasRealGame = false;
+            foreach ($roundData['pairings'] as $p) {
+                if (!$p['isBye']) { $hasRealGame = true; break; }
+            }
+            if (!$hasRealGame) {
                 unset($this->rounds[$roundNum]);
             }
         }
@@ -396,11 +405,16 @@ class ChessResultsScraper
 
         if ($whiteNo <= 0) return; // Not a data row
 
-        // Check for "not paired" — skip entirely, the round hasn't been paired yet
+        // Check for "not paired" or bye when no opponent
         if ($blackNo <= 0) {
             $blackName = isset($colMap['blackName']) ? trim($cells[$colMap['blackName']]) : '';
             if (preg_match('#not paired|nicht gepaart|no jugado|non accoppiato|pas apparié#i', $blackName)) {
-                return; // Not a real pairing — round hasn't been generated yet
+                // "not paired" with a result (e.g. "½") means a bye, not an unpaired round
+                if ($resultStr !== '') {
+                    $isBye = true;
+                } else {
+                    return; // No result — round hasn't been generated yet
+                }
             }
             // Check for bye: no black player or keyword in black name
             if ($blackName === '' || preg_match('#bye|spielfrei|free#i', $blackName)) {
@@ -586,6 +600,24 @@ class ChessResultsScraper
                 }
             }
         }
+    }
+
+    /**
+     * Compute scores from scraped round results when the standings page lags behind.
+     */
+    private function computeScoresFromResults(): void
+    {
+        foreach ($this->players as &$player) {
+            $computed = 0.0;
+            foreach ($player['results'] as $r) {
+                if ($r === '1') $computed += 1.0;
+                elseif ($r === '½') $computed += 0.5;
+            }
+            if ($computed > $player['currentScore']) {
+                $player['currentScore'] = $computed;
+            }
+        }
+        unset($player);
     }
 
     private function resultForWhite(?string $result): ?string
