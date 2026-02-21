@@ -39,7 +39,8 @@ JaVaFoPairing wraps JaVaFo via: TRF file generation -> `java -jar vendor/javafo.
 
 - **R1 color convention**: JaVaFo default R1 color may differ from actual (lot-based)
 - **Scraper missing byes**: Half-point bye entries not scraped from chess-results.com; inferred from later-round participation
-- **Forfeit handling**: Forfeits use `-` color and `+`/`-` TRF results; scraper preserves `F1-0`/`F0-1` notation
+- **Forfeit handling**: Scraper preserves actual colors for forfeits and tracks them via `forfeits[$round]` flag on player data; TRF uses `+`/`-` result codes with the real color (e.g. `37 b +`)
+- **Pairing system mismatch**: JaVaFo implements FIDE Dutch; tournaments may use other systems (Burstein, Dubov) in Swiss-Manager, causing differences especially in lower score groups
 - **Scraper pagination**: chess-results.com `&art=2` only shows last ~3 rounds; `fetchMissingRounds()` fetches earlier rounds via `&art=2&rd=N`
 
 ## Development
