@@ -589,14 +589,16 @@ class ChessResultsScraper
 
                 if (isset($this->players[$whiteNo])) {
                     $this->players[$whiteNo]['opponents'][$roundNum] = $blackNo;
-                    $this->players[$whiteNo]['colors'][$roundNum] = $forfeit ? '-' : 'W';
+                    $this->players[$whiteNo]['colors'][$roundNum] = 'W';
                     $this->players[$whiteNo]['results'][$roundNum] = $this->resultForWhite($pairing['result']);
+                    if ($forfeit) $this->players[$whiteNo]['forfeits'][$roundNum] = true;
                 }
 
                 if (isset($this->players[$blackNo])) {
                     $this->players[$blackNo]['opponents'][$roundNum] = $whiteNo;
-                    $this->players[$blackNo]['colors'][$roundNum] = $forfeit ? '-' : 'B';
+                    $this->players[$blackNo]['colors'][$roundNum] = 'B';
                     $this->players[$blackNo]['results'][$roundNum] = $this->resultForBlack($pairing['result']);
+                    if ($forfeit) $this->players[$blackNo]['forfeits'][$roundNum] = true;
                 }
             }
         }

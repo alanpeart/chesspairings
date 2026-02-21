@@ -126,10 +126,10 @@ class JaVaFoPairing
                             'result' => $this->mapByeResult($result),
                         ];
                     } else {
-                        $isForfeit = ($color === '-');
+                        $isForfeit = !empty($player['forfeits'][$r]);
                         $roundData[] = [
                             'opponent' => $opp,
-                            'color' => $isForfeit ? '-' : strtolower($color),
+                            'color' => strtolower($color),
                             'result' => $this->mapResult($result, $isForfeit),
                         ];
                     }
