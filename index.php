@@ -40,6 +40,7 @@
     <main class="main">
         <section class="intro">
             <p>An unofficial tool that predicts Swiss-system pairings for tournaments on chess-results.com. Powered by <a href="https://github.com/JaVaFo" target="_blank" rel="noopener">JaVaFo</a>, the FIDE-endorsed Dutch pairing engine. Paste a tournament link below to see predicted pairings for any round &mdash; useful for scouting your likely next opponent or just satisfying your curiosity!</p>
+            <p class="disclaimer">Note: predictions use the FIDE Dutch pairing algorithm. Tournament organisers may choose a different pairing system (e.g. Burstein, Dubov) in Swiss-Manager, which can produce different pairings &mdash; especially in lower score groups. Pairings may also differ if a player withdraws, takes a bye, or if the arbiter makes manual adjustments.</p>
         </section>
 
         <section class="input-section">
@@ -84,7 +85,7 @@
     </main>
 
     <footer class="footer">
-        <p>Data sourced from <a href="https://chess-results.com" target="_blank" rel="noopener">chess-results.com</a>. Pairings are predictions based on the Dutch Swiss algorithm — actual pairings may differ.</p>
+        <p>Data sourced from <a href="https://chess-results.com" target="_blank" rel="noopener">chess-results.com</a>. Predictions use the FIDE Dutch pairing algorithm &mdash; actual pairings may differ if the tournament uses a different system, or due to withdrawals, byes, or arbiter adjustments.</p>
     </footer>
 
     <script src="js/app.js"></script>
