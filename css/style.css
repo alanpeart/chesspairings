@@ -724,6 +724,14 @@ a:hover {
 
 /* === Responsive === */
 @media (max-width: 640px) {
+    .main {
+        padding: 0.75rem;
+    }
+
+    .input-card {
+        padding: 1rem;
+    }
+
     .input-row {
         flex-direction: column;
     }
@@ -732,24 +740,73 @@ a:hover {
         width: 100%;
     }
 
+    .tournament-header {
+        padding: 0.75rem 1rem;
+    }
+
+    /* Tabs: compact to fit all three */
     .tabs {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        max-width: 100%;
+        gap: 0;
     }
 
     .tab {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8rem;
-        flex-shrink: 0;
+        padding: 0.45rem 0.5rem;
+        font-size: 0.7rem;
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
     }
 
-    .data-table {
-        max-width: 100%;
+    /* Tables: tighter padding and smaller text */
+    .data-table th {
+        padding: 0.4rem 0.35rem;
+        font-size: 0.65rem;
+        letter-spacing: 0.02em;
     }
 
+    .data-table td {
+        padding: 0.35rem 0.35rem;
+        font-size: 0.75rem;
+    }
+
+    .data-table .num {
+        font-size: 0.7rem;
+    }
+
+    /* Pairings table: compact player cells */
     .player-cell {
-        min-width: 140px;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
+    .player-name {
+        font-size: 0.72rem;
+    }
+
+    .player-meta {
+        font-size: 0.62rem;
+    }
+
+    .color-indicator {
+        width: 10px;
+        height: 10px;
+    }
+
+    .vs-cell {
+        font-size: 0.6rem;
+    }
+
+    /* History table: smaller color squares */
+    .color-strip .square {
+        width: 16px;
+        height: 16px;
+        font-size: 0.55rem;
+    }
+
+    .bye-card,
+    .manual-bye-card {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
     }
 }
 
