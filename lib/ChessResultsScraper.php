@@ -17,10 +17,10 @@ class ChessResultsScraper
     private function normalizeUrl(string $url): string
     {
         if (preg_match('#(https?://[^/]*chess-results\.com/tnr\d+\.aspx\?lan=\d+)#i', $url, $m)) {
-            return $m[1];
+            return $m[1] . '&zeilen=99999';
         }
         if (preg_match('#(https?://[^/]*chess-results\.com/tnr\d+\.aspx)#i', $url, $m)) {
-            return $m[1] . '?lan=1';
+            return $m[1] . '?lan=1&zeilen=99999';
         }
         throw new InvalidArgumentException('Invalid chess-results.com URL');
     }
