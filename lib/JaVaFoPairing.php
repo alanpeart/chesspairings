@@ -147,7 +147,7 @@ class JaVaFoPairing
             if ($this->actualPool !== null && !in_array($startNo, $this->actualPool)) {
                 $roundData[] = ['opponent' => 0, 'color' => '-', 'result' => '-'];
             } elseif (in_array($startNo, $this->manualByes)) {
-                $roundData[] = ['opponent' => 0, 'color' => '-', 'result' => 'H'];
+                $roundData[] = ['opponent' => 0, 'color' => '-', 'result' => '-'];
             }
 
             // Compute score from rounds 1..completedRounds only (not from full tournament score)
