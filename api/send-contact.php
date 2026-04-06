@@ -121,10 +121,10 @@ if (!empty($errors)) {
 }
 
 // ─── Sanitize Input ───
-$name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+$name = htmlspecialchars($name, ENT_NOQUOTES, 'UTF-8');
 $email = filter_var($email, FILTER_SANITIZE_EMAIL);
 $tournament_url = filter_var($tournament_url, FILTER_SANITIZE_URL);
-$message = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+$message = htmlspecialchars($message, ENT_NOQUOTES, 'UTF-8');
 
 // Build email body
 $tournament_section = $tournament_url ? "\nTournament URL: {$tournament_url}\n" : "\nTournament URL: Not provided\n";
