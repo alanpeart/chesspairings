@@ -26,13 +26,18 @@
 </head>
 <body>
     <header class="header">
-        <div class="header-inner">
+        <div class="header-inner" style="display:flex;justify-content:space-between;align-items:center;">
             <div class="logo">
-                <span class="logo-icon">♔</span>
-                <div>
-                    <h1>ChessPairings <span class="alpha-badge">alpha</span></h1>
-                    <p class="tagline">Predict the next round from chess-results.com</p>
-                </div>
+                <a href="/" class="logo-link" style="display:contents; text-decoration:none; color:inherit;">
+                    <span class="logo-icon">♔</span>
+                    <div>
+                        <h1>ChessPairings <span class="alpha-badge">alpha</span></h1>
+                        <p class="tagline">Predict the next round from chess-results.com</p>
+                    </div>
+                </a>
+            </div>
+            <div style="display:flex;align-items:center;">
+                <a href="/contact.php" style="color:var(--text-secondary);text-decoration:none;font-size:0.9rem;font-weight:500;transition:color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">Get in touch</a>
             </div>
         </div>
     </header>

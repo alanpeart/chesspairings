@@ -1,7 +1,23 @@
-# Temporary/generated files
-b64.txt
-test_out.txt
-_writer.php
+# Environment / secrets
+config.php
 
-# Claude Code local state
-.claude/
+# Composer
+composer.phar
+composer.lock
+composer.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Rate limiting data (if using file-based storage)
+rate_limit/
+config.php

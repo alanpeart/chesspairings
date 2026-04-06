@@ -1,0 +1,23 @@
+<?php
+/**
+ * ChessPairings configuration
+ * Copy to config.php and fill in credentials.
+ * This file is NOT committed to git.
+ */
+
+define('SMTP_HOST', 'email-smtp.eu-west-1.amazonaws.com');
+define('SMTP_PORT', 587);
+define('SMTP_USERNAME', '');     // SES SMTP username
+define('SMTP_PASSWORD', '');     // SES SMTP password
+define('MAIL_FROM', 'noreply@chess-pairings.com');
+define('MAIL_TO', 'alan@ampdigital.com');
+define('SITE_NAME', 'ChessPairings');
+define('SITE_URL', 'https://chess-pairings.com');
+
+// hCaptcha — register at hcaptcha.com
+define('HCAPTCHA_SITE_KEY', '');
+define('HCAPTCHA_SECRET_KEY', '');
+define('HCAPTCHA_ENABLED', false); // Set to true once keys are filled
+
+// Rate limiting: max submissions per IP per hour
+define('CONTACT_RATE_LIMIT', 3);
