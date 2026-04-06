@@ -42,6 +42,41 @@ JaVaFoPairing wraps JaVaFo via: TRF file generation -> `java -jar vendor/javafo.
 - **Forfeit handling**: Scraper preserves actual colors for forfeits and tracks them via `forfeits[$round]` flag on player data; TRF uses `+`/`-` result codes with the real color (e.g. `37 b +`)
 - **Pairing system mismatch**: JaVaFo implements FIDE Dutch; tournaments may use other systems (Burstein, Dubov) in Swiss-Manager, causing differences especially in lower score groups
 - **Scraper pagination**: chess-results.com `&art=2` only shows last ~3 rounds; `fetchMissingRounds()` fetches earlier rounds via `&art=2&rd=N`
+## Contact Form
+
+Added 2025-04-06. Users can report bugs/contact via `/contact.php`.
+
+### Files
+- **`contact.php`** — Dark-theme contact form (name, email, tournament URL, description). JS intercepts form submit and POSTs to `/api/send-contact.php`.
+- **`api/send-contact.php`** — Validates input, checks rate limit, verifies hCaptcha, sends email via PHPMailer + Amazon SES SMTP. Returns JSON `{success: true/false, error: "..."}`.
+- **`vendor/phpmailer/`** — PHPMailer library (manual install, not composer).
+- **`config.php`** — SMTP credentials and site settings. **NEVER committed to git.** See `config.php.example` for template.
+
+### Email Delivery
+- Sent from: `noreply@chess-pairings.com` via SES SMTP (eu-west-1)
+- Delivered to: `alan@ampdigital.com`
+- Reply-to: submitter's email address
+- Rate limit: defined by `CONTACT_RATE_LIMIT` in config.php (default 3 per IP per hour, stored in `.rate_limit/` directory)
+
+### Configuration
+```php
+// config.php (not in git)
+SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD
+MAIL_FROM, MAIL_TO, SITE_NAME, SITE_URL
+HCAPTCHA_SITE_KEY, HCAPTCHA_SECRET_KEY, HCAPTCHA_ENABLED
+CONTACT_RATE_LIMIT
+```
+
+### hCaptcha
+- Placeholder in contact.php — enable by filling `HCAPTCHA_*` keys in config.php and setting `HCAPTCHA_ENABLED = true`.
+
+
+## Deployment
+- Live instance: ChessPairings on Lightsail (54.195.64.176)
+- Deploy: `git pull` on the server
+- `config.php` must be manually uploaded via browser terminal (cat heredoc)
+- PHP 8.5 — deprecation warnings suppressed in `api/tournament.php` (curl_close deprecated)
+- Java required for JaVaFo (OpenJDK 25.0.2)
 
 ## Development
 
