@@ -49,10 +49,34 @@
         return /chess-results\.com\/tnr\d+/i.test(url);
     }
 
-    function showError(msg) {
-        errorBanner.textContent = msg;
+    let lastAnalyzeRound = undefined;
+
+    function showError(msg, options) {
+        const retryable = options?.retry !== false;
+        errorBanner.innerHTML = '';
+
+        const text = document.createElement('span');
+        text.textContent = msg;
+        errorBanner.appendChild(text);
+
+        if (retryable) {
+            const retryBtn = document.createElement('button');
+            retryBtn.textContent = 'Retry';
+            retryBtn.className = 'error-retry-btn';
+            retryBtn.addEventListener('click', () => {
+                hideError();
+                analyze(lastAnalyzeRound);
+            });
+            errorBanner.appendChild(retryBtn);
+        }
+
+        const dismissBtn = document.createElement('button');
+        dismissBtn.textContent = '\u00d7';
+        dismissBtn.className = 'error-dismiss-btn';
+        dismissBtn.addEventListener('click', hideError);
+        errorBanner.appendChild(dismissBtn);
+
         errorBanner.classList.remove('hidden');
-        setTimeout(() => errorBanner.classList.add('hidden'), 8000);
     }
 
     function hideError() {
@@ -73,11 +97,11 @@
     async function analyze(targetRound) {
         const url = urlInput.value.trim();
         if (!url) {
-            showError('Please enter a tournament URL.');
+            showError('Please enter a tournament URL.', { retry: false });
             return;
         }
         if (!validateUrl(url)) {
-            showError('Invalid URL. Please use a chess-results.com tournament link (e.g. https://chess-results.com/tnr123456.aspx?lan=1)');
+            showError('Invalid URL. Please use a chess-results.com tournament link (e.g. https://chess-results.com/tnr123456.aspx?lan=1)', { retry: false });
             return;
         }
 
@@ -85,6 +109,7 @@
         setLoading(true, 'Fetching tournament data...');
         analyzeBtn.disabled = true;
         currentTournamentUrl = url;
+        lastAnalyzeRound = targetRound;
 
         // Update URL bar for shareability
         let shareUrl = `${window.location.pathname}?url=${encodeURIComponent(url)}`;
@@ -94,10 +119,10 @@
 
         // Progress messages
         const messages = [
-            'Scraping standings...',
-            'Parsing round pairings...',
-            'Running Swiss pairing algorithm...',
-            'Assigning colors and boards...',
+            'Scraping tournament data...',
+            'Parsing round history...',
+            'Generating pairings via JaVaFo...',
+            'Almost there...',
         ];
         let msgIdx = 0;
         const progressTimer = setInterval(() => {
@@ -113,9 +138,17 @@
             if (manualByes.length) apiUrl += `&byes=${manualByes.join(',')}`;
 
             const resp = await fetch(apiUrl);
-            const data = await resp.json();
-
             clearInterval(progressTimer);
+
+            if (resp.status === 429) {
+                setLoading(false);
+                const retryData = await resp.json().catch(() => ({}));
+                showError(retryData.error || 'Too many requests. Please wait a moment and try again.');
+                analyzeBtn.disabled = false;
+                return;
+            }
+
+            const data = await resp.json();
 
             if (!data.success) {
                 throw new Error(data.error || 'Unknown error');

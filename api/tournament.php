@@ -1,4 +1,9 @@
 <?php
+/**
+ * Tournament API — scrapes and predicts pairings
+ */
+header('Content-Type: application/json');
+error_reporting(E_ALL & ~E_DEPRECATED);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -6,6 +11,8 @@ header('Access-Control-Allow-Origin: *');
 require_once __DIR__ . '/../lib/ChessResultsScraper.php';
 require_once __DIR__ . '/../lib/SwissPairing.php';
 require_once __DIR__ . '/../lib/JaVaFoPairing.php';
+require_once __DIR__ . '/../lib/TournamentCache.php';
+require_once __DIR__ . '/../lib/RateLimiter.php';
 
 try {
     $action = $_GET['action'] ?? '';
@@ -30,6 +37,16 @@ try {
         exit;
     }
 
+    // Rate limiting: 30 requests per IP per 5-minute window
+    $limiter = new RateLimiter(__DIR__ . '/../.rate_limit_api', 30, 300);
+    if (!$limiter->check()) {
+        $retry = $limiter->retryAfter();
+        http_response_code(429);
+        header("Retry-After: $retry");
+        echo json_encode(['success' => false, 'error' => "Too many requests. Please try again in {$retry} seconds."]);
+        exit;
+    }
+
     // Optional: predict a specific round (for completed tournaments)
     $targetRound = isset($_GET['round']) ? (int)$_GET['round'] : 0;
 
@@ -41,9 +58,27 @@ try {
         $manualByes = array_values(array_unique($manualByes));
     }
 
-    // Scrape tournament data
-    $scraper = new ChessResultsScraper($url);
-    $data = $scraper->analyze();
+    // Scrape tournament data (with caching)
+    $cache = new TournamentCache();
+    $cacheHit = false;
+    $scrapeStart = microtime(true);
+
+    $data = $cache->get($url);
+
+    if ($data === null) {
+        // Cache miss — scrape fresh
+        $scraper = new ChessResultsScraper($url);
+        $data = $scraper->analyze();
+
+        // Determine if completed for cache TTL purposes
+        $t = $data['tournament'];
+        $cacheAsCompleted = ($t['completedRounds'] >= $t['totalRounds'] && $t['totalRounds'] > 0);
+        $cache->set($url, $data, $cacheAsCompleted);
+    } else {
+        $cacheHit = true;
+    }
+
+    $scrapeTime = round((microtime(true) - $scrapeStart) * 1000); // ms
 
     // Validate manual byes against actual player startNos
     $manualByes = array_values(array_filter($manualByes, fn($sno) => isset($data['players'][$sno])));
@@ -88,6 +123,7 @@ try {
             'mode' => 'completed',
             'tournament' => $tournament,
             'playerCount' => count($data['players']),
+            '_cache' => ['hit' => $cacheHit, 'dataTime' => $scrapeTime],
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     } else {
@@ -200,6 +236,8 @@ try {
         $response['actualPoolSize'] = count($actualPool);
         $response['totalPlayers'] = count($data['players']);
     }
+
+    $response['_cache'] = ['hit' => $cacheHit, 'dataTime' => $scrapeTime];
 
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 

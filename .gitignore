@@ -18,6 +18,10 @@ Thumbs.db
 *.log
 logs/
 
-# Rate limiting data (if using file-based storage)
+# Rate limiting data (file-based storage)
 rate_limit/
-config.php
+.rate_limit/
+.rate_limit_api/
+
+# Tournament data cache
+cache/

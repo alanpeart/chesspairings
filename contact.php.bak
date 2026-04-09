@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact — ChessPairings</title>
+    <meta name="description" content="Get in touch with the ChessPairings team. Report bugs, suggest features, or ask about the tournament prediction tool.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=2">
+    <style>
+        /* Contact page specific styles */
+        .contact-page {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            flex: 1;
+        }
+
+        .contact-page h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group label .required {
+            color: var(--loss);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-family: var(--sans);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(77, 142, 247, 0.15);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .submit-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-family: var(--sans);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 0.5rem;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .contact-alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .contact-alert.success {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: var(--win);
+            display: block;
+        }
+
+        .contact-alert.error {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: var(--loss);
+            display: block;
+        }
+
+        .contact-help {
+            margin-top: 2rem;
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .contact-help h3 {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner" style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="logo">
+                <a href="/" class="logo-link" style="display:contents; text-decoration:none; color:inherit;">
+                    <span class="logo-icon">♔</span>
+                    <div>
+                        <h1>ChessPairings <span class="alpha-badge">alpha</span></h1>
+                        <p class="tagline">Predict the next round from chess-results.com</p>
+                    </div>
+                </a>
+            </div>
+            <div style="display:flex;align-items:center;">
+                <a href="/" style="color:var(--text-secondary);text-decoration:none;font-size:0.9rem;font-weight:500;transition:color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">Predict</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="contact-page">
+        <h1>Get in Touch</h1>
+        <p class="contact-subtitle">
+            Found a bug predicting pairings? Have a feature suggestion? 
+            Fill out the form below and I'll get back to you.
+        </p>
+
+        <?php
+        $form_error = '';
+        $form_success = false;
+
+        // Handle inline form submission (non-JS fallback)
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/api/send-contact.php';
+        }
+        ?>
+
+        <?php if ($form_error): ?>
+        <div class="contact-alert error" id="form-alert" style="display: block;">
+            <?= htmlspecialchars($form_error) ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($form_success): ?>
+        <div class="contact-alert success" id="form-alert" style="display: block;">
+            ✅ Your message has been sent. I'll get back to you as soon as possible.
+        </div>
+        <?php else: ?>
+        <form class="contact-form" id="contact-form" method="POST">
+            <div id="contact-form-fields">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required
+                           placeholder="Your name" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required
+                           placeholder="your@email.com" maxlength="200">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="tournament_url">Tournament URL</label>
+                <input type="url" id="tournament_url" name="tournament_url"
+                       placeholder="https://chess-results.com/tnrXXXXXX.aspx" maxlength="500">
+            </div>
+
+            <div class="form-group">
+                <label for="message">Description <span class="required">*</span></label>
+                <textarea id="message" name="message" required
+                          placeholder="Describe the issue, feature request, or question..."
+                          maxlength="5000"></textarea>
+            </div>
+
+            <!-- hCaptcha placeholder — enabled once keys are filled in config -->
+            <?php if (defined('HCAPTCHA_SITE_KEY') && HCAPTCHA_SITE_KEY): ?>
+            <div class="h-captcha" data-sitekey="<?= HCAPTCHA_SITE_KEY ?>"></div>
+            <?php endif; ?>
+
+            <div class="contact-alert" id="form-alert-dynamic" style="display:none; margin-bottom: 0.5rem;"></div>
+
+            <button type="submit" class="submit-btn" id="submit-btn">
+                Send Message
+            </button>
+            </div>
+        </form>
+        <?php endif; ?>
+
+        <div class="contact-help">
+            <h3>Need faster help?</h3>
+            <p>
+                If you're reporting a bug, please include the 
+                <strong>tournament URL</strong> from chess-results.com so I can 
+                investigate. For general questions, the description field is all I need.
+            </p>
+        </div>
+    </main>
+
+    <footer class="footer" style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.8rem;">
+        © <?= date('Y') ?> ChessPairings — Predict Swiss-system pairings
+    </footer>
+
+    <?php if (defined('HCAPTCHA_SITE_KEY') && HCAPTCHA_SITE_KEY): ?>
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <?php if (defined('HCAPTCHA_SITE_KEY') && HCAPTCHA_SITE_KEY): ?>
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <?php endif; ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('contact-form');
+            const btn = document.getElementById('submit-btn');
+            const alertEl = document.getElementById('form-alert-dynamic');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                btn.disabled = true;
+                btn.textContent = 'Sending...';
+
+                const formData = new FormData(form);
+
+                try {
+                    const resp = await fetch('/api/send-contact.php', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    const data = await resp.json();
+
+                    if (data.success) {
+                        form.style.display = 'none';
+                        const msg = document.createElement('div');
+                        msg.className = 'contact-alert success';
+                        msg.style.display = 'block';
+                        msg.textContent = '✅ Your message has been sent. I\'ll get back to you as soon as possible.';
+                        form.parentNode.insertBefore(msg, form);
+                    } else {
+                        if (alertEl) {
+                            alertEl.className = 'contact-alert error';
+                            alertEl.style.display = 'block';
+                            alertEl.textContent = data.error || 'Something went wrong. Please try again.';
+                        }
+                        btn.disabled = false;
+                        btn.textContent = 'Send Message';
+                    }
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.textContent = 'Send Message';
+                    if (alertEl) {
+                        alertEl.className = 'contact-alert error';
+                        alertEl.style.display = 'block';
+                        alertEl.textContent = 'Network error. Please check your connection and try again.';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

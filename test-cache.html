@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessPairings — Cache Test</title>
+    <style>
+        :root {
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1d27;
+            --bg-card: #1e2130;
+            --bg-hover: #252839;
+            --border: #2a2d3e;
+            --text-primary: #e8e9ed;
+            --text-secondary: #b4b8c8;
+            --text-muted: #8e93a8;
+            --accent: #4d8ef7;
+            --accent-hover: #3a7ae8;
+            --win: #4ade80;
+            --loss: #f87171;
+            --draw: #facc15;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+        .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+        }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .log {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            line-height: 1.7;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .log-entry { margin-bottom: 0.3rem; }
+        .log-time { color: var(--text-muted); }
+        .log-hit { color: var(--win); font-weight: 600; }
+        .log-miss { color: var(--loss); font-weight: 600; }
+        .log-info { color: var(--accent); }
+        .log-warn { color: var(--draw); }
+        .log-error { color: var(--loss); }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.8rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--mono);
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .controls { margin-bottom: 1rem; display: flex; gap: 0.5rem; }
+    </style>
+</head>
+<body>
+    <h1>Cache Test Page</h1>
+    <p class="subtitle">Verify caching is working. Hit "Fetch" twice — second request should be fast and show a cache hit.</p>
+
+    <div class="input-row">
+        <input type="text" id="url" placeholder="chess-results.com tournament URL" value="https://chess-results.com/tnr1092498.aspx?lan=1">
+        <button class="btn-primary" id="fetchBtn" onclick="runFetch()">Fetch</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn-secondary" onclick="runFetch();setTimeout(runFetch, 500)">Fetch twice (quick)</button>
+        <button class="btn-secondary" onclick="clearLog()">Clear log</button>
+    </div>
+
+    <div class="summary">
+        <div class="stat-card">
+            <div class="stat-value" id="totalRequests">0</div>
+            <div class="stat-label">Requests</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value log-hit" id="cacheHits">0</div>
+            <div class="stat-label">Cache hits</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value log-miss" id="cacheMisses">0</div>
+            <div class="stat-label">Cache misses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgTime">—</div>
+            <div class="stat-label">Avg response (ms)</div>
+        </div>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <script>
+        let stats = { requests: 0, hits: 0, misses: 0, times: [] };
+        let requestNum = 0;
+
+        function log(msg, cls) {
+            const el = document.getElementById('log');
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${cls || 'log-info'}">${msg}</span>`;
+            el.appendChild(div);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('totalRequests').textContent = stats.requests;
+            document.getElementById('cacheHits').textContent = stats.hits;
+            document.getElementById('cacheMisses').textContent = stats.misses;
+            if (stats.times.length > 0) {
+                const avg = Math.round(stats.times.reduce((a, b) => a + b) / stats.times.length);
+                document.getElementById('avgTime').textContent = avg + 'ms';
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            stats = { requests: 0, hits: 0, misses: 0, times: [] };
+            updateStats();
+        }
+
+        async function runFetch() {
+            const url = document.getElementById('url').value.trim();
+            if (!url) { log('No URL entered', 'log-warn'); return; }
+
+            const btn = document.getElementById('fetchBtn');
+            btn.disabled = true;
+
+            const num = ++requestNum;
+            log(`#${num} Fetching: ${url}`);
+
+            const clientStart = performance.now();
+
+            try {
+                const apiUrl = `api/tournament.php?action=analyze&url=${encodeURIComponent(url)}`;
+                const resp = await fetch(apiUrl);
+                const clientTime = Math.round(performance.now() - clientStart);
+                const json = await resp.json();
+
+                stats.requests++;
+                stats.times.push(clientTime);
+
+                if (!resp.ok || !json.success) {
+                    log(`#${num} ERROR (${resp.status}): ${json.error || 'Unknown error'}`, 'log-error');
+                    updateStats();
+                    btn.disabled = false;
+                    return;
+                }
+
+                const cache = json._cache || {};
+                const hit = cache.hit;
+                const serverDataTime = cache.dataTime;
+
+                if (hit) {
+                    stats.hits++;
+                    log(`#${num} CACHE HIT — server data: ${serverDataTime}ms, total roundtrip: ${clientTime}ms`, 'log-hit');
+                } else {
+                    stats.misses++;
+                    log(`#${num} CACHE MISS — server data: ${serverDataTime}ms, total roundtrip: ${clientTime}ms`, 'log-miss');
+                }
+
+                const name = json.tournament?.name || '(unknown)';
+                const rounds = json.tournament?.completedRounds || '?';
+                const total = json.tournament?.totalRounds || '?';
+                const players = json.standings?.length || json.playerCount || '?';
+                const mode = json.mode || '?';
+
+                log(`#${num} ${name} — R${rounds}/${total}, ${players} players, mode: ${mode}`);
+
+                if (json.predictions?.pairings) {
+                    log(`#${num} Predicted ${json.predictions.pairings.length} boards for round ${json.predictions.nextRound}`);
+                }
+
+            } catch (err) {
+                stats.requests++;
+                log(`#${num} NETWORK ERROR: ${err.message}`, 'log-error');
+            }
+
+            updateStats();
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
