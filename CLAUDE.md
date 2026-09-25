@@ -42,6 +42,9 @@ JaVaFoPairing wraps JaVaFo via: TRF file generation -> `java -jar vendor/javafo.
 - **Forfeit handling**: Scraper preserves actual colors for forfeits and tracks them via `forfeits[$round]` flag on player data; TRF uses `+`/`-` result codes with the real color (e.g. `37 b +`)
 - **Pairing system mismatch**: JaVaFo implements FIDE Dutch; tournaments may use other systems (Burstein, Dubov) in Swiss-Manager, causing differences especially in lower score groups
 - **Scraper pagination**: chess-results.com `&art=2` only shows last ~3 rounds; `fetchMissingRounds()` fetches earlier rounds via `&art=2&rd=N`
+- **Round headers vs. announcement banner**: `&art=2` pages carry an organiser announcement in `h3.CRmsg` whose free text often lists the schedule ("Round 1: 25 September 19:00, Round 2: ..."). It matches the same `Round\s+(\d+)` regex as real round headers, so `parsePairings()` must **not** pair headers to tables by array index — it walks `//h3 | //table[CRs1|CRs2]` in document order and skips `h3.CRmsg`. Getting this wrong shifts every round by one and silently duplicates a round's games under two numbers (see Hull 4NCL Congress 2026, tnr1483594)
+- **Unpaired players in the upcoming round**: before publishing pairings, arbiters may post a round table containing only "not paired" rows (byes/withdrawals). Such rounds are dropped from `rounds` (no real games) but retained in `unpairedByRound[$round]`; `api/tournament.php` excludes those players from the live pairing pool and returns them as `unpaired`. Without this they stay in the pool and shift every board below them
+
 ## Contact Form
 
 Added 2025-04-06. Users can report bugs/contact via `/contact.php`.
@@ -72,8 +75,8 @@ CONTACT_RATE_LIMIT
 
 
 ## Deployment
-- Live instance: ChessPairings on Lightsail (54.195.64.176)
-- Deploy: `git pull` on the server
+- Live instance: ChessPairings on Lightsail (54.195.64.176), Bitnami stack
+- Deploy: `ssh bitnami@54.195.64.176`, then `git pull` in `/opt/bitnami/apache/htdocs`
 - `config.php` must be manually uploaded via browser terminal (cat heredoc)
 - PHP 8.5 — deprecation warnings suppressed in `api/tournament.php` (curl_close deprecated)
 - Java required for JaVaFo (OpenJDK 25.0.2)
