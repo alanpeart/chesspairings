@@ -93,6 +93,6 @@
         <p>Data sourced from <a href="https://chess-results.com" target="_blank" rel="noopener">chess-results.com</a>. Predictions use the FIDE Dutch pairing algorithm &mdash; actual pairings may differ if the tournament uses a different system, or due to withdrawals, byes, or arbiter adjustments.</p>
     </footer>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=2"></script>
 </body>
 </html>

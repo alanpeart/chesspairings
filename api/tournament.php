@@ -90,6 +90,7 @@ try {
                     && empty($data['rounds']);
 
     // If target round specified, rewind player state to before that round
+    $unpairedNext = [];
     $fullData = $data; // Keep full data for JaVaFo (needs future-round info for bye inference)
     if ($targetRound > 0) {
         if ($targetRound < 1 || $targetRound > $tournament['totalRounds']) {
@@ -127,8 +128,22 @@ try {
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     } else {
-        // Live tournament — predict next round
-        $pairer = new JaVaFoPairing($data, null, null, $manualByes);
+        // Live tournament — predict next round.
+        // chess-results may already list byes/withdrawals for the upcoming round
+        // before its pairings are published; leave those players out of the pool.
+        $nextRound = ($tournament['completedRounds'] ?? 0) + 1;
+        $unpairedNext = $data['unpairedByRound'][$nextRound] ?? [];
+        $unpairedNext = array_intersect_key($unpairedNext, $data['players']);
+
+        $livePool = null;
+        if (!empty($unpairedNext)) {
+            $livePool = array_values(array_diff(
+                array_keys($data['players']),
+                array_keys($unpairedNext)
+            ));
+        }
+
+        $pairer = new JaVaFoPairing($data, $livePool, null, $manualByes);
     }
 
     $predictions = $pairer->predict();
@@ -230,6 +245,18 @@ try {
 
     if ($finalStandings !== null) {
         $response['finalStandings'] = $finalStandings;
+    }
+
+    if (!empty($unpairedNext)) {
+        $response['unpaired'] = [];
+        foreach ($unpairedNext as $sno => $result) {
+            $response['unpaired'][] = [
+                'startNo' => $sno,
+                'name' => $data['players'][$sno]['name'],
+                'rating' => $data['players'][$sno]['rating'],
+                'result' => $result,
+            ];
+        }
     }
 
     if (isset($actualPool)) {

@@ -270,7 +270,7 @@
 
         currentStandings = data.standings;
         renderByeSelector(data);
-        renderPairings(data.predictions);
+        renderPairings(data.predictions, data.unpaired);
         renderStandings(data.standings);
         renderHistory(data.playerDetails, predictingRound - 1);
 
@@ -291,7 +291,7 @@
         $('#tab-pairings').classList.remove('hidden');
     }
 
-    function renderPairings(predictions) {
+    function renderPairings(predictions, unpaired) {
         const pairings = predictions.pairings;
 
         let html = `<table class="data-table">
@@ -341,6 +341,11 @@
         if (predictions.manualByes && predictions.manualByes.length) {
             const names = predictions.manualByes.map(b => `${esc(b.playerName)} (${b.playerRating})`).join(', ');
             html += `<div class="manual-bye-card">Half-point bye: ${names}</div>`;
+        }
+
+        if (unpaired && unpaired.length) {
+            const names = unpaired.map(u => `${esc(u.name)} (${u.rating})`).join(', ');
+            html += `<div class="manual-bye-card">Not paired this round (per chess-results): ${names}</div>`;
         }
 
         $('#tab-pairings').innerHTML = html;

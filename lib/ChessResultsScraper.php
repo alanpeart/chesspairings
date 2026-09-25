@@ -6,6 +6,7 @@ class ChessResultsScraper
     private string $tournamentId;
     private array $players = [];
     private array $rounds = [];
+    private array $unpairedByRound = [];
     private array $tournamentInfo = [];
 
     public function __construct(string $url)
@@ -50,6 +51,7 @@ class ChessResultsScraper
             'tournament' => $this->tournamentInfo,
             'players' => $this->players,
             'rounds' => $this->rounds,
+            'unpairedByRound' => $this->unpairedByRound,
         ];
     }
 
@@ -239,27 +241,37 @@ class ChessResultsScraper
         @$dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NOERROR | LIBXML_NOWARNING);
         $xpath = new DOMXPath($dom);
 
-        // Collect round headers (h3) with their round numbers
-        $roundHeaders = [];
-        $headers = $xpath->query('//h3');
-        foreach ($headers as $header) {
-            if (preg_match('#(?:Round|Runde|Ronda|Turno|Tour)\s+(\d+)#i', $header->textContent, $m)) {
-                $roundHeaders[] = (int)$m[1];
+        // Format A: each h3 "Round N" is immediately followed by its CRs1 table.
+        // Walk headers and tables together in document order — indexes can't be
+        // matched up positionally because chess-results emits an unrelated
+        // announcement banner (h3.CRmsg) that often mentions round numbers too,
+        // and a round can be listed with no table at all.
+        $nodes = $xpath->query('//h3 | //table[contains(@class, "CRs1") or contains(@class, "CRs2")]');
+        $pendingRound = null;
+        $matchedAnyHeader = false;
+
+        foreach ($nodes as $node) {
+            if (strtolower($node->nodeName) === 'h3') {
+                // Skip the tournament announcement banner — it is free text, not a round header
+                if (stripos($node->getAttribute('class'), 'CRmsg') !== false) continue;
+                if (preg_match('#(?:Round|Runde|Ronda|Turno|Tour)\s+(\d+)#i', $node->textContent, $m)) {
+                    $pendingRound = (int)$m[1];
+                }
+                continue;
             }
+
+            // A CRs table: belongs to the most recent unconsumed round header
+            if ($pendingRound === null) continue;
+            $roundNum = $pendingRound;
+            $pendingRound = null;
+            $matchedAnyHeader = true;
+            $this->rounds[$roundNum] = ['pairings' => []];
+            $this->parseRoundTable($xpath, $node, $roundNum);
         }
 
-        $tables = $xpath->query('//table[contains(@class, "CRs1") or contains(@class, "CRs2")]');
-
-        if (!empty($roundHeaders)) {
-            // Format A: each h3 "Round N" is followed by one CRs1 table
-            foreach ($tables as $ti => $table) {
-                if (!isset($roundHeaders[$ti])) break;
-                $roundNum = $roundHeaders[$ti];
-                $this->rounds[$roundNum] = ['pairings' => []];
-                $this->parseRoundTable($xpath, $table, $roundNum);
-            }
-        } else {
+        if (!$matchedAnyHeader) {
             // Format B: single table with round divider rows
+            $tables = $xpath->query('//table[contains(@class, "CRs1") or contains(@class, "CRs2")]');
             foreach ($tables as $table) {
                 $rows = $xpath->query('.//tr', $table);
                 $currentRound = 0;
@@ -289,7 +301,18 @@ class ChessResultsScraper
                 if (!$p['isBye']) { $hasRealGame = true; break; }
             }
             if (!$hasRealGame) {
+                // Pairings for this round aren't published yet, but the arbiter has
+                // already entered byes/withdrawals. Keep those so the next-round
+                // prediction can leave those players out of the pool.
+                $unpaired = [];
+                foreach ($roundData['pairings'] as $p) {
+                    if ($p['whiteNo'] > 0) $unpaired[$p['whiteNo']] = $p['result'];
+                }
+                if (!empty($unpaired)) $this->unpairedByRound[$roundNum] = $unpaired;
                 unset($this->rounds[$roundNum]);
+            } else {
+                // Real pairings found (possibly on a re-fetch) — drop any earlier notice
+                unset($this->unpairedByRound[$roundNum]);
             }
         }
 
